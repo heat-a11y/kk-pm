@@ -501,107 +501,113 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
           <h3 class="section-title">Bimbingan Satu Muka Surat (OPC)</h3>
-          <p class="text-xs text-gray-400 mb-4">From GKKK — Coaching & Mentoring Record</p>
-          <form @submit.prevent="generateOPC" class="space-y-4">
+          <p class="text-xs text-gray-400 mb-4">Penjana surat bimbingan profesional daripada GKKK.</p>
+          <div class="space-y-4">
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Teacher Name</label>
-              <select class="form-input" x-model="opcForm.teacher">
-                <option value="">-- Select Teacher --</option>
-                <template x-for="t in teachers" :key="t">
-                  <option x-text="t" :value="t"></option>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Kepada</label>
+              <select class="form-input" x-model="opcForm.kepada">
+                <option value="">-- Pilih Guru --</option>
+                <template x-for="t in opcTeachers" :key="t">
+                  <option :value="t" x-text="t"></option>
                 </template>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Club</label>
-              <select class="form-input" x-model="opcForm.club">
-                <option value="">-- Select Club --</option>
-                <template x-for="club in attendanceClubs" :key="club">
-                  <option :value="club" x-text="club"></option>
-                </template>
-              </select>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Daripada</label>
+              <input type="text" class="form-input bg-gray-50 text-gray-600 cursor-not-allowed" x-model="opcForm.daripada" readonly disabled>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Date of Coaching</label>
-              <input type="date" class="form-input" x-model="opcForm.date">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Tarikh</label>
+              <input type="date" class="form-input" x-model="opcForm.tarikh">
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Focus Area</label>
-              <select class="form-input" x-model="opcForm.focus">
-                <option value="">-- Select Area --</option>
-                <option>Pedagogi</option>
-                <option>Pengurusan Kelab</option>
-                <option>Perancangan Aktiviti</option>
-                <option>Pentadbiran Rekod</option>
-                <option>Kemahiran Insaniah</option>
-              </select>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Perkara / Subjek</label>
+              <input type="text" class="form-input" x-model="opcForm.perkara">
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Coaching Notes</label>
-              <textarea class="form-input" rows="4" placeholder="Observations, guidance, and follow-up items..." x-model="opcForm.notes"></textarea>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">1. Pengiktirafan &amp; Kekuatan yang Diperhatikan</label>
+              <textarea class="form-input" rows="3" placeholder="Contoh: Guru menunjukkan komitmen tinggi dalam pengurusan kelab dan berjaya melaksanakan aktiviti mengikut perancangan tahunan..." x-model="opcForm.strength"></textarea>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Follow-up Date</label>
-              <input type="date" class="form-input" x-model="opcForm.followup">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">2. Bidang Peningkatan</label>
+              <textarea class="form-input" rows="3" placeholder="Contoh: Dokumentasi rekod kehadiran perlu dikemaskini dengan lebih teratur dan sistematik..." x-model="opcForm.growth"></textarea>
             </div>
-            <div class="flex gap-3 pt-1">
-              <button type="submit" class="btn-primary">Generate Report</button>
-              <button type="reset" class="btn-secondary" @click="resetOPCForm">Reset</button>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">3. Pelan Tindakan &amp; Langkah Seterusnya</label>
+              <textarea class="form-input" rows="3" placeholder="Contoh: 1. Menyediakan buku rekod khas 2. Menghadiri kursus pentadbiran 3. Perjumpaan susulan pada bulan hadapan" x-model="opcForm.actionPlan"></textarea>
             </div>
-          </form>
-        </div>
-        <div class="space-y-4">
-          <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 class="section-title">Coaching Report Preview</h3>
-            <template x-if="generatedOPC">
-              <div id="opc-preview" class="space-y-3 text-xs leading-relaxed">
-                <div class="border-2 border-navy-800 p-5 rounded-lg">
-                  <div class="text-center border-b-2 border-navy-800 pb-3 mb-3">
-                    <h4 class="text-sm font-bold text-navy-900">BIMBINGAN SATU MUKA SURAT (OPC)</h4>
-                    <p class="text-[10px] text-gray-500">SJKC Pin Min · GKKK</p>
-                  </div>
-                  <table class="w-full text-xs">
-                    <tr><td class="font-semibold py-1 w-1/3">Guru</td><td x-text="generatedOPC.teacher" class="py-1"></td></tr>
-                    <tr><td class="font-semibold py-1">Kelab</td><td x-text="generatedOPC.club" class="py-1"></td></tr>
-                    <tr><td class="font-semibold py-1">Tarikh</td><td x-text="generatedOPC.date" class="py-1"></td></tr>
-                    <tr><td class="font-semibold py-1">Fokus</td><td x-text="generatedOPC.focus" class="py-1"></td></tr>
-                    <tr><td class="font-semibold py-1 align-top">Catatan</td><td x-text="generatedOPC.notes" class="py-1"></td></tr>
-                    <tr><td class="font-semibold py-1">Tindakan Susulan</td><td x-text="generatedOPC.followup" class="py-1"></td></tr>
-                  </table>
-                  <div class="mt-4 pt-3 border-t border-gray-200 text-[10px] text-gray-400">
-                    <p class="text-center">GKKK: ___________________________ &nbsp;&nbsp; Guru: ___________________________</p>
-                  </div>
-                </div>
-                <div class="flex gap-2">
-                  <button class="btn-primary text-xs" @click="downloadOPC">Download PDF</button>
-                  <button class="btn-secondary text-xs" @click="printOPC">Print</button>
-                </div>
-              </div>
-            </template>
-            <template x-if="!generatedOPC">
-              <div class="text-center py-12 text-gray-400">
-                <svg class="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                <p class="text-sm">Complete the form to preview the OPC coaching report</p>
-              </div>
-            </template>
           </div>
-          <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 class="section-title">Coaching History</h3>
-            <template x-if="coachingHistory.length === 0">
-              <p class="text-xs text-gray-400 text-center py-4">No coaching records yet.</p>
-            </template>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
-              <template x-for="(ch, i) in coachingHistory" :key="i">
-                <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p class="text-sm font-medium text-gray-800" x-text="ch.teacher + ' — ' + ch.club"></p>
-                    <p class="text-xs text-gray-400" x-text="ch.date + ' · ' + ch.focus"></p>
+        </div>
+        <div class="flex flex-col gap-4">
+          <div id="opc-preview" class="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div class="p-6 sm:p-8 md:p-10">
+              <template x-if="opcForm.kepada">
+                <div class="text-xs leading-relaxed">
+                  <div class="text-center border-b-2 border-navy-800 pb-3 mb-4">
+                    <h4 class="text-sm font-bold text-navy-900 tracking-tight">BIMBINGAN SATU MUKA SURAT (OPC)</h4>
+                    <p class="text-[10px] font-semibold text-navy-700 mt-0.5">SJKC Pin Min — Unit Kokurikulum</p>
                   </div>
-                  <span class="badge bg-blue-50 text-blue-700 text-[10px]">Completed</span>
+                  <div class="mb-4 space-y-1.5">
+                    <p class="flex"><span class="w-24 text-gray-500 shrink-0">Tarikh:</span><span class="font-medium text-gray-800" x-text="formatDate(opcForm.tarikh)"></span></p>
+                    <p class="flex"><span class="w-24 text-gray-500 shrink-0">Kepada:</span><span class="font-medium text-gray-800" x-text="opcForm.kepada"></span></p>
+                    <p class="flex"><span class="w-24 text-gray-500 shrink-0">Daripada:</span><span class="font-medium text-gray-800" x-text="opcForm.daripada"></span></p>
+                    <p class="flex"><span class="w-24 text-gray-500 shrink-0">Perkara:</span><span class="font-medium text-gray-800" x-text="opcForm.perkara"></span></p>
+                  </div>
+                  <hr class="border-t border-navy-200 mb-4">
+                  <div class="space-y-4">
+                    <div>
+                      <h5 class="font-bold text-navy-800 text-[11px] mb-1.5 bg-gray-50 -mx-2 px-2 py-1.5 rounded">1. Pengiktirafan &amp; Kekuatan yang Diperhatikan</h5>
+                      <template x-if="opcForm.strength">
+                        <p class="text-gray-700 whitespace-pre-wrap leading-relaxed" x-text="opcForm.strength"></p>
+                      </template>
+                      <template x-if="!opcForm.strength">
+                        <p class="text-gray-300 italic">[Tiada catatan]</p>
+                      </template>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-navy-800 text-[11px] mb-1.5 bg-gray-50 -mx-2 px-2 py-1.5 rounded">2. Bidang Peningkatan</h5>
+                      <template x-if="opcForm.growth">
+                        <p class="text-gray-700 whitespace-pre-wrap leading-relaxed" x-text="opcForm.growth"></p>
+                      </template>
+                      <template x-if="!opcForm.growth">
+                        <p class="text-gray-300 italic">[Tiada catatan]</p>
+                      </template>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-navy-800 text-[11px] mb-1.5 bg-gray-50 -mx-2 px-2 py-1.5 rounded">3. Pelan Tindakan &amp; Langkah Seterusnya</h5>
+                      <template x-if="opcForm.actionPlan">
+                        <p class="text-gray-700 whitespace-pre-wrap leading-relaxed" x-text="opcForm.actionPlan"></p>
+                      </template>
+                      <template x-if="!opcForm.actionPlan">
+                        <p class="text-gray-300 italic">[Tiada catatan]</p>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="mt-6 pt-4 border-t border-gray-200 text-center">
+                    <div class="inline-block border border-navy-200 rounded-lg px-6 py-3 bg-navy-50/50">
+                      <p class="text-[10px] text-gray-400 mb-1">[ Tandatangan ]</p>
+                      <p class="text-sm font-bold text-navy-800">LIAN</p>
+                      <p class="text-[10px] text-gray-600">Guru Kanan Kokurikulum</p>
+                      <p class="text-[10px] text-gray-500">SJKC Pin Min</p>
+                    </div>
+                  </div>
+                  <div class="mt-4 pt-2 text-center">
+                    <p class="text-[9px] text-gray-400 italic">Laporan dijana secara rasmi oleh Sistem Pengurusan Kokurikulum (GKKK).</p>
+                  </div>
+                </div>
+              </template>
+              <template x-if="!opcForm.kepada">
+                <div class="text-center py-14 text-gray-400">
+                  <svg class="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                  <p class="text-sm">Pilih penerima surat di sebelah kiri<br>untuk pratonton OPC</p>
                 </div>
               </template>
             </div>
           </div>
+          <button @click="printOPC" class="btn-primary w-full flex items-center justify-center gap-2" x-show="opcForm.kepada">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Cetak / Simpan PDF
+          </button>
         </div>
       </div>
     </div>
@@ -633,7 +639,7 @@ function app() {
       { date: '29 Jul', title: 'Kawat Unit Beruniform', club: 'Unit Beruniform', time: '8:00 AM', status: 'Confirmed' },
     ],
     months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
-    teachers: ['Cikgu Lim','Cikgu Tan','Cikgu Raju','Cikgu Wong','Cikgu Siti','Cikgu Chong'],
+    opcTeachers: ['LEE EE TING','MELISSA WONG','LOOI YUN YUAN','ARMAN BIN AWANG','HEW LEE FUN','SEMUA GURU'],
     activityClubs: ['Kelab Badminton','Bulan Sabit Merah Malaysia (PBSM)','Kelab Bola Keranjang'],
     activityDB: {
       'Kelab Badminton': [
@@ -712,9 +718,15 @@ function app() {
     customActivities: [],
     oprForm: { club: '', teacher: '', meetings: '' },
     oprActivities: [],
-    opcForm: { teacher: '', club: '', date: '', focus: '', notes: '', followup: '' },
-    generatedOPC: null,
-    coachingHistory: [],
+    opcForm: {
+      kepada: '',
+      daripada: 'LIAN (Guru Kanan Kokurikulum - GKKK)',
+      tarikh: '2026-07-14',
+      perkara: 'Maklum Balas & Bimbingan Profesional Kokurikulum',
+      strength: '',
+      growth: '',
+      actionPlan: ''
+    },
     attendanceClubs: [
       'Kelab Badminton',
       'Kelab Bola Keranjang',
@@ -908,15 +920,12 @@ function app() {
       if (!db) { this.oprActivities = []; return; }
       this.oprActivities = db.map(a => ({ ...a, checked: true }));
     },
-    generateOPC() {
-      const f = this.opcForm;
-      if (!f.teacher || !f.club || !f.date || !f.focus || !f.notes) { alert('Please fill in all required fields.'); return; }
-      this.generatedOPC = { ...f };
-      this.coachingHistory.push({ ...f });
-    },
-    resetOPCForm() {
-      this.opcForm = { teacher: '', club: '', date: '', focus: '', notes: '', followup: '' };
-      this.generatedOPC = null;
+    formatDate(val) {
+      if (!val) return '';
+      const months = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+      const parts = val.split('-');
+      if (parts.length !== 3) return val;
+      return parseInt(parts[2]) + ' ' + months[parseInt(parts[1])-1] + ' ' + parts[0];
     },
     printOPRDoc() {
       window.print();
@@ -925,21 +934,17 @@ function app() {
       const el = document.getElementById('opc-preview');
       if (!el) return;
       const win = window.open('', '_blank');
-      win.document.write('<html><head><title>OPC Coaching Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>');
+      win.document.write('<html><head><title>OPC Coaching</title><style>');
+      win.document.write('body{font-family:Inter,system-ui,sans-serif;padding:0.5in;font-size:12px;color:#1e293b;}');
+      win.document.write('h4{font-size:14px;text-align:center;}');
+      win.document.write('hr{border:none;border-top:2px solid #1e293b;}');
+      win.document.write('table{width:100%}td{padding:4px 0}');
+      win.document.write('.sign-box{border:1px solid #cbd5e1;border-radius:8px;padding:16px 24px;display:inline-block;text-align:center;margin-top:24px;}');
+      win.document.write('</style></head><body>');
       win.document.write(el.innerHTML);
       win.document.write('</body></html>');
       win.document.close();
       win.print();
-    },
-    downloadOPC() {
-      const el = document.getElementById('opc-preview');
-      if (!el) return;
-      const content = '<html><head><title>OPC Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>' + el.innerHTML + '</body></html>';
-      const blob = new Blob([content], { type: 'text/html' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'OPC_Coaching_' + (this.generatedOPC?.teacher || '') + '.html';
-      a.click();
     },
   };
 }
