@@ -285,90 +285,95 @@
     <div id="tab-activity" class="tab-content" :class="{ 'active': currentTab === 'activity' }">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 class="section-title">Penjana Aktiviti Mingguan</h3>
-          <form @submit.prevent="generateActivity" class="space-y-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="section-title mb-0">Repositori Aktiviti</h3>
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Pilih Kelab</label>
+            <select class="form-input" x-model="hubClub" @change="loadHubActivities">
+              <option value="">-- Pilih Kelab --</option>
+              <template x-for="club in activityClubs" :key="club">
+                <option :value="club" x-text="club"></option>
+              </template>
+            </select>
+          </div>
+          <template x-if="hubClub">
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Club</label>
-              <select class="form-input" x-model="activityForm.club">
-                <option value="">-- Select Club --</option>
-                <option>Kelab STEM</option>
-                <option>Kelab Bahasa</option>
-                <option>Kelab Sukan</option>
-                <option>Unit Beruniform</option>
-                <option>Kelab Seni</option>
-              </select>
+              <div class="flex items-center justify-between mb-3 text-sm bg-gray-50 rounded-lg px-3 py-2">
+                <span class="text-gray-600">Progress: <strong class="text-gray-800" x-text="hubProgress + '/' + hubActivities.length"></strong></span>
+                <span class="text-xs text-gray-400" x-text="'Jumlah: ' + hubActivities.length + ' aktiviti'"></span>
+              </div>
+              <div class="space-y-1.5 max-h-[500px] overflow-y-auto pr-1">
+                <template x-for="(act, i) in hubActivities" :key="i">
+                  <div class="flex items-start gap-3 py-2.5 px-3 rounded-lg border border-gray-100 hover:bg-gray-50/70 transition cursor-pointer" @click="toggleActivity(i)">
+                    <div class="pt-0.5">
+                      <div class="w-5 h-5 rounded border-2 flex items-center justify-center text-white text-[10px] font-bold transition-all" :class="act.done ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'">
+                        <template x-if="act.done">✓</template>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-[10px] font-semibold text-navy-700 bg-navy-50 px-2 py-0.5 rounded shrink-0 leading-relaxed" x-text="'M' + act.week"></span>
+                        <span class="text-sm font-medium text-gray-800 truncate" :class="{ 'line-through text-gray-400': act.done }" x-text="act.title"></span>
+                      </div>
+                      <p class="text-xs text-gray-400 leading-relaxed line-clamp-2" x-text="act.objectives"></p>
+                    </div>
+                  </div>
+                </template>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Week</label>
-              <input type="week" class="form-input" x-model="activityForm.week">
+          </template>
+          <template x-if="!hubClub">
+            <div class="text-center py-14 text-gray-400">
+              <svg class="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              <p class="text-sm">Sila pilih kelab untuk melihat senarai aktiviti</p>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Theme / Topic</label>
-              <input type="text" class="form-input" placeholder="e.g. Kemahiran Berfikir" x-model="activityForm.topic">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Activity Type</label>
-              <select class="form-input" x-model="activityForm.type">
-                <option value="">-- Select Type --</option>
-                <option>Workshop</option>
-                <option>Pertandingan</option>
-                <option>Ceramah</option>
-                <option>Latihan</option>
-                <option>Gotong-royong</option>
-              </select>
-            </div>
-            <div class="flex gap-3 pt-1">
-              <button type="submit" class="btn-primary">Generate Activity</button>
-              <button type="reset" class="btn-secondary" @click="resetActivityForm">Reset</button>
-            </div>
-          </form>
+          </template>
         </div>
         <div class="space-y-4">
           <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 class="section-title">Generated Activity</h3>
-            <template x-if="generatedActivity">
-              <div class="space-y-3">
-                <div class="bg-navy-50 rounded-lg p-4 border border-navy-100">
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <p class="text-sm font-semibold text-gray-800" x-text="generatedActivity.title"></p>
-                      <p class="text-xs text-gray-500 mt-0.5" x-text="generatedActivity.club + ' · ' + generatedActivity.week"></p>
-                    </div>
-                    <span class="badge bg-blue-50 text-blue-700">New</span>
-                  </div>
-                  <div class="mt-3 text-xs text-gray-600 space-y-1">
-                    <p><span class="font-medium">Topic:</span> <span x-text="generatedActivity.topic"></span></p>
-                    <p><span class="font-medium">Type:</span> <span x-text="generatedActivity.type"></span></p>
-                    <p><span class="font-medium">Description:</span> <span x-text="generatedActivity.description"></span></p>
-                    <p><span class="font-medium">Materials:</span> <span x-text="generatedActivity.materials"></span></p>
-                  </div>
-                </div>
-                <div class="flex gap-2">
-                  <button class="btn-primary text-xs" @click="saveActivity">Save Activity</button>
-                  <button class="btn-secondary text-xs">Print</button>
-                </div>
+            <h3 class="section-title">Tambah Aktiviti Sendiri</h3>
+            <form @submit.prevent="addCustomActivity" class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Kelab</label>
+                <select class="form-input" x-model="customForm.club">
+                  <option value="">-- Pilih Kelab --</option>
+                  <template x-for="club in activityClubs" :key="club">
+                    <option :value="club" x-text="club"></option>
+                  </template>
+                </select>
               </div>
-            </template>
-            <template x-if="!generatedActivity">
-              <div class="text-center py-8 text-gray-400">
-                <svg class="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                <p class="text-sm">Fill in the form and click "Generate Activity"</p>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Minggu Perjumpaan</label>
+                <input type="number" class="form-input" min="1" max="52" placeholder="e.g. 5" x-model="customForm.week">
               </div>
-            </template>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Tajuk Aktiviti</label>
+                <input type="text" class="form-input" placeholder="e.g. Latihan Servis Panjang" x-model="customForm.title">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Objektif / Butiran</label>
+                <textarea class="form-input" rows="3" placeholder="Terangkan objektif dan butiran aktiviti..." x-model="customForm.objectives"></textarea>
+              </div>
+              <div class="flex gap-3 pt-1">
+                <button type="submit" class="btn-primary">Tambah Aktiviti</button>
+                <button type="reset" class="btn-secondary" @click="resetCustomForm">Set Semula</button>
+              </div>
+            </form>
           </div>
           <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 class="section-title">Saved Activities</h3>
-            <template x-if="savedActivities.length === 0">
-              <p class="text-xs text-gray-400 text-center py-4">No saved activities yet.</p>
+            <h3 class="section-title">Aktiviti Ditambah</h3>
+            <template x-if="customActivities.length === 0">
+              <p class="text-xs text-gray-400 text-center py-4">Belum ada aktiviti ditambah.</p>
             </template>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
-              <template x-for="(sa, i) in savedActivities" :key="i">
+            <div class="space-y-1 max-h-40 overflow-y-auto">
+              <template x-for="(ca, i) in customActivities" :key="i">
                 <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p class="text-sm font-medium text-gray-800" x-text="sa.title"></p>
-                    <p class="text-xs text-gray-400" x-text="sa.club + ' · ' + sa.date"></p>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-gray-800 truncate" x-text="ca.title"></p>
+                    <p class="text-xs text-gray-400" x-text="ca.club + ' · M' + ca.week"></p>
                   </div>
-                  <button class="text-xs text-red-500 hover:text-red-700" @click="savedActivities.splice(i, 1)">Remove</button>
+                  <button @click="removeCustomActivity(i)" class="text-xs text-red-500 hover:text-red-700 font-medium ml-2 shrink-0">Padam</button>
                 </div>
               </template>
             </div>
@@ -387,11 +392,9 @@
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Club Name</label>
               <select class="form-input" x-model="oprForm.club">
                 <option value="">-- Select Club --</option>
-                <option>Kelab STEM</option>
-                <option>Kelab Bahasa</option>
-                <option>Kelab Sukan</option>
-                <option>Unit Beruniform</option>
-                <option>Kelab Seni</option>
+                <template x-for="club in attendanceClubs" :key="club">
+                  <option :value="club" x-text="club"></option>
+                </template>
               </select>
             </div>
             <div>
@@ -477,11 +480,9 @@
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Club</label>
               <select class="form-input" x-model="opcForm.club">
                 <option value="">-- Select Club --</option>
-                <option>Kelab STEM</option>
-                <option>Kelab Bahasa</option>
-                <option>Kelab Sukan</option>
-                <option>Unit Beruniform</option>
-                <option>Kelab Seni</option>
+                <template x-for="club in attendanceClubs" :key="club">
+                  <option :value="club" x-text="club"></option>
+                </template>
               </select>
             </div>
             <div>
@@ -597,9 +598,82 @@ function app() {
     ],
     months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     teachers: ['Cikgu Lim','Cikgu Tan','Cikgu Raju','Cikgu Wong','Cikgu Siti','Cikgu Chong'],
-    activityForm: { club: '', week: '', topic: '', type: '' },
-    generatedActivity: null,
-    savedActivities: [],
+    activityClubs: ['Kelab Badminton','Bulan Sabit Merah Malaysia (PBSM)','Kelab Bola Keranjang'],
+    activityDB: {
+      'Kelab Badminton': [
+        { week:1, title:'Penubuhan AJK & Taklimat', objectives:'Pembentukan jawatankuasa kelab, penerangan peraturan dan objektif tahunan kelab badminton.' },
+        { week:2, title:'Undang-undang Asas BWF', objectives:'Memahami peraturan permainan badminton yang ditetapkan oleh BWF termasuk sistem pengadilan dan undang-undang gelanggang.' },
+        { week:3, title:'Cara Memegang Raket (Forehand)', objectives:'Teknik asas pegangan raket untuk pukulan forehand. Penekanan pada posisi jari dan pergelangan tangan.' },
+        { week:4, title:'Cara Memegang Raket (Backhand)', objectives:'Teknik asas pegangan raket untuk pukulan backhand menggunakan ibu jari sebagai sokongan.' },
+        { week:5, title:'Servis Tinggi Hadapan', objectives:'Teknik servis tinggi ke arah hadapan gelanggang untuk permainan perseorangan.' },
+        { week:6, title:'Servis Rendah Forehand', objectives:'Teknik servis rendah menggunakan pukulan forehand untuk permainan beregu.' },
+        { week:7, title:'Servis Rendah Backhand', objectives:'Teknik servis rendah menggunakan pukulan backhand dengan kawalan rapi.' },
+        { week:8, title:'Pukulan Hadapan (Forehand Stroke)', objectives:'Latihan pukulan forehand dari pelbagai posisi di gelanggang.' },
+        { week:9, title:'Pukulan Kilas (Backhand Stroke)', objectives:'Latihan pukulan backhand dengan penekanan pada pergerakan kaki.' },
+        { week:10, title:'Latihan Pergerakan Kaki (Footwork)', objectives:'Gerak kaki yang betul untuk menjangkau kok dengan pantas dan seimbang.' },
+        { week:11, title:'Latihan Lob (Lambung)', objectives:'Teknik pukulan lob tinggi untuk pertahanan dan mengubah rentak permainan.' },
+        { week:12, title:'Latihan Pukulan Smash Tajam', objectives:'Teknik smash yang kuat dan tepat. Penekanan pada timing dan sudut pukulan.' },
+        { week:13, title:'Latihan Pukulan Drop Leret', objectives:'Teknik drop shot untuk mengelirukan lawan dengan pukulan lembut dekat jaring.' },
+        { week:14, title:'Simulasi Perlawanan Perseorangan', objectives:'Perlawanan latihan format perseorangan dengan pengadilan rasmi.' },
+        { week:15, title:'Simulasi Perlawanan Beregu', objectives:'Perlawanan latihan format beregu dengan komunikasi dan strategi.' },
+        { week:16, title:'Ujian Kecergasan Fizikal', objectives:'Ujian kecergasan khusus pemain badminton termasuk larian ulang-alik dan vertical jump.' },
+        { week:17, title:'Sesi Pemilihan Pemain MSSD', objectives:'Pemilihan pemain untuk mewakili sekolah ke kejohanan MSSD.' },
+        { week:18, title:'Latihan Ketahanan Stamina', objectives:'Latihan fizikal untuk meningkatkan stamina dan ketahanan aerobik.' },
+        { week:19, title:'Teknik Bertahan (Defending)', objectives:'Strategi pertahanan dalam permainan termasuk clear dan lob bertahan.' },
+        { week:20, title:'Taktik Menyerang (Attacking)', objectives:'Strategi serangan untuk menjaringkan mata dengan smash dan net play.' },
+        { week:21, title:'Kejohanan Tertutup Kelab', objectives:'Kejohanan dalaman kelab badminton sebagai penutup sesi tahunan.' }
+      ],
+      'Bulan Sabit Merah Malaysia (PBSM)': [
+        { week:1, title:'Penubuhan AJK & Ikrar PBSM', objectives:'Majlis penubuhan jawatankuasa dan ikrar ahli PBSM untuk sesi 2026.' },
+        { week:2, title:'Sejarah dan Prinsip Asas PBSM', objectives:'Sejarah penubuhan Palang Merah dan prinsip pergerakan PBSM di Malaysia.' },
+        { week:3, title:'Asas Pertolongan Cemas', objectives:'Pengenalan kepada pertolongan cemas, peralatan asas, dan etika penolong.' },
+        { week:4, title:'Kaedah Balutan Anduh Segitiga', objectives:'Teknik membalut luka menggunakan kain anduh segitiga untuk pelbagai bahagian tubuh.' },
+        { week:5, title:'Rawatan Luka dan Calar Ringan', objectives:'Prosedur membersih dan merawat luka serta calar ringan dengan betul.' },
+        { week:6, title:'Rawatan Melecur Asas', objectives:'Cara merawat kecederaan melecur tahap pertama dan kedua.' },
+        { week:7, title:'Prosedur CPR Asas (Teori)', objectives:'Konsep resusitasi kardiopulmonari dan langkah-langkah keselamatan.' },
+        { week:8, title:'Prosedur CPR Asas (Amali)', objectives:'Amalan praktikal CPR menggunakan manikin di bawah pengawasan.' },
+        { week:9, title:'Ceramah Keselamatan Rumah dan Sekolah', objectives:'Kesedaran tentang bahaya dan langkah keselamatan di rumah dan sekolah.' },
+        { week:10, title:'Pemeriksaan Kesihatan Percuma', objectives:'Pemeriksaan kesihatan asas untuk warga sekolah oleh ahli PBSM.' },
+        { week:11, title:'Khidmat Masyarakat di Pusat Jagaan', objectives:'Lawatan dan khidmat masyarakat di pusat jagaan warga emas.' },
+        { week:12, title:'Kempen Derma Darah', objectives:'Kempen kesedaran dan pendaftaran penderma darah bersama Pusat Darah Negara.' },
+        { week:13, title:'Gotong-royong Kebersihan Persekitaran', objectives:'Aktiviti gotong-royong membersihkan kawasan sekolah dan persekitaran.' },
+        { week:14, title:'Skuad Bencana Kecil', objectives:'Latihan pengurusan bencana kecil di tapak perhimpunan sekolah.' },
+        { week:15, title:'Penyediaan Kotak Pertolongan Cemas', objectives:'Cara menyediakan dan menyelenggara peti pertolongan cemas yang lengkap.' },
+        { week:16, title:'Ujian Lisan Pentauliahan Lencana', objectives:'Ujian teori dan lisan untuk pentauliahan lencana PBSM.' },
+        { week:17, title:'Ujian Amali Pertolongan Cemas', objectives:'Ujian praktikal kemahiran pertolongan cemas secara berkumpulan.' },
+        { week:18, title:'Ikatan Tali dan Simpulan Asas', objectives:'Teknik ikatan tali untuk pelbagai tujuan kecemasan dan penyelamatan.' },
+        { week:19, title:'Pendedahan Penyakit Berjangkit', objectives:'Kesedaran tentang penyakit berjangkit dan langkah pencegahan.' },
+        { week:20, title:'Simulasi Pemindahan Mangsa Kecemasan', objectives:'Latihan memindahkan mangsa dengan selamat menggunakan usungan dan teknik manual.' },
+        { week:21, title:'Kawad PBSM', objectives:'Latihan kawad asas PBSM untuk perbarisan dan acara rasmi.' }
+      ],
+      'Kelab Bola Keranjang': [
+        { week:1, title:'Penubuhan AJK & Taklimat', objectives:'Pembentukan jawatankuasa kelab dan taklimat program tahun 2026.' },
+        { week:2, title:'Undang-undang Asas FIBA', objectives:'Memahami peraturan permainan bola keranjang mengikut piawaian FIBA.' },
+        { week:3, title:'Teknik Pegangan Bola (Ball Handling)', objectives:'Cara memegang dan mengawal bola dengan teknik yang betul.' },
+        { week:4, title:'Teknik Hantaran Dada (Chest Pass)', objectives:'Hantaran tepat dari dada untuk jarak dekat dan sederhana.' },
+        { week:5, title:'Teknik Hantaran Lantun (Bounce Pass)', objectives:'Hantaran lantun untuk mengelak pemain lawan.' },
+        { week:6, title:'Teknik Hantaran Atas Kepala (Overhead Pass)', objectives:'Hantaran jarak jauh menggunakan kedua-dua belah tangan.' },
+        { week:7, title:'Teknik Gelecekan Setempat (Control Dribble)', objectives:'Menggelecek dalam ruang sempit dengan perlindungan bola.' },
+        { week:8, title:'Teknik Gelecekan Pantas (Speed Dribble)', objectives:'Menggelecek dengan kelajuan tinggi untuk serangan balas.' },
+        { week:9, title:'Teknik Jaringan Pegun (Set Shot)', objectives:'Teknik jaringan dari posisi pegun dengan bentuk lontaran yang betul.' },
+        { week:10, title:'Teknik Jaringan Lay-up (Lay-up Shot)', objectives:'Jaringan bergerak ke arah bakul dengan langkah yang betul.' },
+        { week:11, title:'Teknik Lompatan dan Rebound', objectives:'Kemahiran melompat dan merebut bola dari papan belakang.' },
+        { week:12, title:'Pertahanan Individu (Man-to-Man)', objectives:'Teknik bertahan satu lawan satu dengan gerak kaki defensif.' },
+        { week:13, title:'Pertahanan Zon (Zone Defense)', objectives:'Sistem pertahanan kawasan 2-3 dan 3-2.' },
+        { week:14, title:'Latihan Kecergasan Larian Ulang-alik', objectives:'Latihan fizikal untuk kelajuan, ketangkasan, dan daya tahan.' },
+        { week:15, title:'Simulasi Taktikal Serangan 3 lawan 3', objectives:'Permainan skala kecil untuk mengasah strategi serangan.' },
+        { week:16, title:'Perlawanan Persahabatan Dalaman', objectives:'Perlawanan antara pasukan dalam kelab untuk menguji kemahiran.' },
+        { week:17, title:'Teknik Hantaran Jauh (Baseball Pass)', objectives:'Hantaran jarak jauh seperti baseball untuk fast break.' },
+        { week:18, title:'Teknik Acahan (Faking)', objectives:'Gerakan memperdaya pemain lawan dengan acahan dan perubahan arah.' },
+        { week:19, title:'Strategi Counter-Attack', objectives:'Serangan balas pantas dari pertahanan ke serangan.' },
+        { week:20, title:'Perlawanan Penutup Tirai Kelab', objectives:'Kejohanan akhir musim antara pasukan dalam kelab.' },
+        { week:21, title:'Ujian Kecergasan dan Kemahiran', objectives:'Penilaian akhir kemahiran pemain merangkumi semua aspek permainan.' }
+      ]
+    },
+    hubClub: '',
+    hubActivities: [],
+    customForm: { club: '', week: '', title: '', objectives: '' },
+    customActivities: [],
     oprForm: { club: '', month: '', sessions: 0, attendance: 0, notes: '' },
     generatedOPR: null,
     opcForm: { teacher: '', club: '', date: '', focus: '', notes: '', followup: '' },
@@ -647,6 +721,10 @@ function app() {
       try {
         const stored = localStorage.getItem('pm_attendance_2026');
         if (stored) this.savedAttendance = JSON.parse(stored);
+      } catch (e) {}
+      try {
+        const stored = localStorage.getItem('pm_custom_activities');
+        if (stored) this.customActivities = JSON.parse(stored);
       } catch (e) {}
       this.availableDates = this.buildDateList();
     },
@@ -736,35 +814,57 @@ function app() {
       if (!arr.length) return '0 hadir';
       return arr.filter(s => s.hadir).length + '/' + arr.length + ' hadir';
     },
-    generateActivity() {
-      const f = this.activityForm;
-      if (!f.club || !f.week || !f.topic || !f.type) { alert('Please fill in all fields.'); return; }
-      const descs = {
-        'Workshop': 'Hands-on workshop focused on practical skills development.',
-        'Pertandingan': 'Friendly competition to foster teamwork and excellence.',
-        'Ceramah': 'Informative talk by invited speaker on relevant topic.',
-        'Latihan': 'Structured training session to improve core competencies.',
-        'Gotong-royong': 'Community service activity promoting responsibility.',
-      };
-      this.generatedActivity = {
-        title: f.topic + ' — ' + f.type,
-        club: f.club,
-        week: f.week,
-        topic: f.topic,
-        type: f.type,
-        description: descs[f.type] || 'Activity session for the week.',
-        materials: 'Stationery, handouts, and equipment as required.',
-      };
+    get hubProgress() {
+      return this.hubActivities.filter(a => a.done).length;
     },
-    saveActivity() {
-      if (!this.generatedActivity) return;
-      this.savedActivities.push({ ...this.generatedActivity, date: new Date().toLocaleDateString('en-MY') });
-      this.generatedActivity = null;
-      this.resetActivityForm();
+    loadHubActivities() {
+      if (!this.hubClub) { this.hubActivities = []; return; }
+      const db = this.activityDB[this.hubClub] || [];
+      const customs = this.customActivities.filter(a => a.club === this.hubClub);
+      const stored = localStorage.getItem('pm_activity_hub_' + this.hubClub);
+      let checkState = {};
+      if (stored) { try { checkState = JSON.parse(stored); } catch (e) {} }
+      this.hubActivities = db.map((a, i) => ({
+        ...a,
+        done: checkState['db-' + i] || false,
+        _key: 'db-' + i
+      }));
+      customs.forEach((a, i) => {
+        this.hubActivities.push({
+          week: a.week,
+          title: a.title,
+          objectives: a.objectives,
+          done: checkState['cust-' + i] || false,
+          _key: 'cust-' + i,
+          _custom: true
+        });
+      });
     },
-    resetActivityForm() {
-      this.activityForm = { club: '', week: '', topic: '', type: '' };
-      this.generatedActivity = null;
+    toggleActivity(i) {
+      if (!this.hubActivities[i]) return;
+      this.hubActivities[i].done = !this.hubActivities[i].done;
+      if (this.hubClub) {
+        const obj = {};
+        this.hubActivities.forEach((a, idx) => { obj[a._key] = a.done; });
+        try { localStorage.setItem('pm_activity_hub_' + this.hubClub, JSON.stringify(obj)); } catch (e) {}
+      }
+    },
+    addCustomActivity() {
+      const f = this.customForm;
+      if (!f.club || !f.week || !f.title || !f.objectives) { alert('Sila isi semua ruangan.'); return; }
+      this.customActivities.push({ club: f.club, week: parseInt(f.week), title: f.title, objectives: f.objectives });
+      try { localStorage.setItem('pm_custom_activities', JSON.stringify(this.customActivities)); } catch (e) {}
+      this.resetCustomForm();
+      if (this.hubClub === f.club) this.loadHubActivities();
+    },
+    removeCustomActivity(i) {
+      const ca = this.customActivities[i];
+      this.customActivities.splice(i, 1);
+      try { localStorage.setItem('pm_custom_activities', JSON.stringify(this.customActivities)); } catch (e) {}
+      if (this.hubClub && ca.club === this.hubClub) this.loadHubActivities();
+    },
+    resetCustomForm() {
+      this.customForm = { club: '', week: '', title: '', objectives: '' };
     },
     generateOPR() {
       const f = this.oprForm;
