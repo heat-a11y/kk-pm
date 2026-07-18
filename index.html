@@ -192,55 +192,91 @@
     <div id="tab-attendance" class="tab-content" :class="{ 'active': currentTab === 'attendance' }">
       <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 fade-in">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <h3 class="section-title mb-0">Rekod Kehadiran</h3>
-          <div class="flex gap-2">
-            <select class="form-input w-auto text-xs">
-              <option>All Clubs</option>
-              <option>Kelab STEM</option>
-              <option>Kelab Bahasa</option>
-              <option>Kelab Sukan</option>
-              <option>Unit Beruniform</option>
-            </select>
-            <input type="date" class="form-input w-auto text-xs">
-            <button class="btn-primary text-xs">Filter</button>
+          <div>
+            <h3 class="section-title mb-1">Rekod Kehadiran</h3>
+            <p class="text-xs text-gray-400">Pilih kelab dan tarikh untuk merekod kehadiran pelajar</p>
           </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-gray-100">
-                <th class="table-header">Student</th>
-                <th class="table-header">Class</th>
-                <th class="table-header">Club</th>
-                <th class="table-header">Date</th>
-                <th class="table-header">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="(r, i) in attendanceRecords" :key="i">
-                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                  <td class="table-cell font-medium text-gray-800" x-text="r.name"></td>
-                  <td class="table-cell" x-text="r.class"></td>
-                  <td class="table-cell" x-text="r.club"></td>
-                  <td class="table-cell text-gray-400" x-text="r.date"></td>
-                  <td class="table-cell">
-                    <span class="badge" :class="{
-                      'bg-green-50 text-green-700': r.status === 'Hadir',
-                      'bg-red-50 text-red-700': r.status === 'Tidak Hadir',
-                      'bg-yellow-50 text-yellow-700': r.status === 'Cuti'
-                    }" x-text="r.status"></span>
-                  </td>
-                </tr>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Kelab</label>
+            <select class="form-input" x-model="selectedClub" @change="loadAttendance">
+              <option value="">-- Pilih Kelab --</option>
+              <template x-for="club in attendanceClubs" :key="club">
+                <option x-text="club" :value="club"></option>
               </template>
-            </tbody>
-          </table>
-        </div>
-        <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
-          <p class="text-xs text-gray-400" x-text="'Showing ' + attendanceRecords.length + ' records'"></p>
-          <div class="flex gap-1">
-            <button class="btn-secondary text-xs px-3 py-1">&larr; Prev</button>
-            <button class="btn-primary text-xs px-3 py-1">Next &rarr;</button>
+            </select>
           </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Tarikh Sesi</label>
+            <select class="form-input" x-model="selectedDate" @change="loadAttendance">
+              <option value="">-- Pilih Tarikh --</option>
+              <template x-for="d in availableDates" :key="d.value">
+                <option :value="d.value" x-text="d.label"></option>
+              </template>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center gap-5 mb-4 text-sm" x-show="selectedClub && selectedDate && attendanceTable.length">
+          <span class="text-gray-500">Jumlah: <strong class="text-gray-800" x-text="attendanceTable.length"></strong></span>
+          <span class="text-green-700">Hadir: <strong x-text="attendanceTable.filter(s => s.hadir).length"></strong></span>
+          <span class="text-red-600">Tidak Hadir: <strong x-text="attendanceTable.filter(s => !s.hadir).length"></strong></span>
+        </div>
+        <div class="overflow-x-auto" x-show="selectedClub && selectedDate">
+          <template x-if="attendanceTable.length">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-100 bg-gray-50/50">
+                  <th class="table-header w-10">#</th>
+                  <th class="table-header">Nama Pelajar</th>
+                  <th class="table-header text-center w-24">Hadir</th>
+                  <th class="table-header text-center w-28">Tidak Hadir</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="(row, i) in attendanceTable" :key="i">
+                  <tr class="border-b border-gray-50 hover:bg-gray-50/30 transition">
+                    <td class="table-cell text-gray-400" x-text="i + 1"></td>
+                    <td class="table-cell font-medium text-gray-800" x-text="row.name"></td>
+                    <td class="table-cell text-center">
+                      <input type="radio" :name="'att-' + i" :checked="row.hadir" @change="setHadir(i, true)" class="w-4 h-4 text-green-600 accent-green-600 cursor-pointer">
+                    </td>
+                    <td class="table-cell text-center">
+                      <input type="radio" :name="'att-' + i" :checked="!row.hadir" @change="setHadir(i, false)" class="w-4 h-4 text-red-600 accent-red-600 cursor-pointer">
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </template>
+          <template x-if="!attendanceTable.length">
+            <div class="text-center py-10 text-gray-400">
+              <svg class="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <p class="text-sm">Sila pilih kelab dan tarikh</p>
+            </div>
+          </template>
+        </div>
+        <div class="flex items-center justify-between mt-5 pt-4 border-t border-gray-100" x-show="selectedClub && selectedDate && attendanceTable.length">
+          <p class="text-xs text-gray-400" x-text="lastSavedMsg || 'Kehadiran belum disimpan'"></p>
+          <button class="btn-primary" @click="saveAttendance">Simpan Kehadiran</button>
+        </div>
+      </div>
+      <div class="mt-6 bg-white rounded-xl border border-gray-100 shadow-sm p-5" x-show="savedKeys.length">
+        <h3 class="section-title">Rekod Tersimpan</h3>
+        <div class="space-y-1">
+          <template x-for="key in savedKeys" :key="key">
+            <div class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+              <div class="text-sm">
+                <span class="font-semibold text-gray-800" x-text="key.split('|')[0]"></span>
+                <span class="text-gray-300 mx-1.5">·</span>
+                <span class="text-gray-500" x-text="key.split('|')[1]"></span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-medium" :class="rateClass(key)" x-text="rateText(key)"></span>
+                <button @click="deleteSavedRecord(key)" class="text-xs text-red-500 hover:text-red-700 font-medium">Padam</button>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -559,14 +595,6 @@ function app() {
       { date: '24 Jul', title: 'Bahasa Melayu Debate', club: 'Kelab Bahasa', time: '3:00 PM', status: 'Pending' },
       { date: '29 Jul', title: 'Kawat Unit Beruniform', club: 'Unit Beruniform', time: '8:00 AM', status: 'Confirmed' },
     ],
-    attendanceRecords: [
-      { name: 'Ahmad Bin Roslan', class: '5A', club: 'Kelab STEM', date: '15 Jul 2026', status: 'Hadir' },
-      { name: 'Siti Nurhaliza', class: '5B', club: 'Kelab STEM', date: '15 Jul 2026', status: 'Hadir' },
-      { name: 'Lim Wei Jie', class: '5A', club: 'Kelab STEM', date: '15 Jul 2026', status: 'Tidak Hadir' },
-      { name: 'Priya Devi', class: '5C', club: 'Kelab Bahasa', date: '14 Jul 2026', status: 'Hadir' },
-      { name: 'Chong Kai Wen', class: '5B', club: 'Kelab Bahasa', date: '14 Jul 2026', status: 'Cuti' },
-      { name: 'Ravi Krishnan', class: '4A', club: 'Unit Beruniform', date: '13 Jul 2026', status: 'Hadir' },
-    ],
     months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     teachers: ['Cikgu Lim','Cikgu Tan','Cikgu Raju','Cikgu Wong','Cikgu Siti','Cikgu Chong'],
     activityForm: { club: '', week: '', topic: '', type: '' },
@@ -577,6 +605,30 @@ function app() {
     opcForm: { teacher: '', club: '', date: '', focus: '', notes: '', followup: '' },
     generatedOPC: null,
     coachingHistory: [],
+    attendanceClubs: [
+      'Kelab Badminton',
+      'Kelab Bola Keranjang',
+      'Bulan Sabit Merah Malaysia (PBSM)',
+      'Kelab Ping Pong',
+      'Kelab Olahraga',
+      'Kelab Tarian',
+      'Persatuan Bahasa'
+    ],
+    clubStudents: {
+      'Kelab Badminton': ['LEE YIHANN','LIM JING XUAN','MAXIME YOONG','GOH HUA YI','ALICIA CHIN','KOH QUAN JUN','LIEW ZI SHUN','TAN WEI MING','CHONG HUI LING','WONG ZI HAN'],
+      'Kelab Bola Keranjang': ['CHEN WEI LUN','LIM ZHI HAO','TAN JUN JIE','WONG YI KAI','TEOH MING HUI','SEE LOKE YEW','KOK HAN NI','LEE JIA YI','TAN CHUN HOW','ONG ZHI FENG'],
+      'Bulan Sabit Merah Malaysia (PBSM)': ['SITI NUR AISHAH','NURUL IZZAH','MUHAMMAD FARIS','AHMAD DANIEL','FATIMAH AZIZAH','NUR ALEEYA','HAZIQ AIMAN','PUTRI NURAIN','AMIRAH SYAHIRA','DANISH IQBAL'],
+      'Kelab Ping Pong': ['TAN YONG WEI','LIM JING YI','CHONG KAI SHENG','WONG ZI QIANG','LOW JUN HAO','TEE ZHI QIAN','KOH CHUN HONG','YAP SHEN YUE','LEE ZHI SHENG','CHONG WEN ZHE'],
+      'Kelab Olahraga': ['MOHAMAD AMIR','VIKNESWARAN A/L','CHAN WAI MUN','SARAVANAN A/L','LIM GUAN YU','RAJESHKUMAR A/L','TAN CHEE HOU','ANANTHARAJ A/L','LOKE WEI JIE','KAVIN A/L'],
+      'Kelab Tarian': ['CHING YI XUAN','KOAY JIA YEE','LIM JIA EN','NG PEI WEN','YAP HUI QI','TAN YEE LING','LOW KELLY','CHAN SHEAU YUN','LEE JIA YING','CHONG PEI SHAN'],
+      'Persatuan Bahasa': ['OOI JUN WEI','LIM ZI JUN','CHUAH WEN XUAN','LEE KOK HOU','KOH ZHI YING','KHOO JIA QI','YAP ZHI XUAN','CHONG KAR YAN','TAN JUN YANG','KOK JUN HAO']
+    },
+    selectedClub: '',
+    selectedDate: '',
+    attendanceTable: [],
+    savedAttendance: {},
+    lastSavedMsg: '',
+    availableDates: [],
 
     get pageTitle() {
       const t = this.tabs.find(t => t.id === this.currentTab);
@@ -585,8 +637,104 @@ function app() {
     get currentDate() {
       return new Date().toLocaleDateString('en-MY', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     },
+    get savedKeys() {
+      return Object.keys(this.savedAttendance).sort().reverse();
+    },
     switchTab(id) {
       this.currentTab = id;
+    },
+    init() {
+      try {
+        const stored = localStorage.getItem('pm_attendance_2026');
+        if (stored) this.savedAttendance = JSON.parse(stored);
+      } catch (e) {}
+      this.availableDates = this.buildDateList();
+    },
+    buildDateList() {
+      const holidayRanges = [
+        { start: [2026,2,21], end: [2026,2,29] },
+        { start: [2026,4,23], end: [2026,5,7] },
+        { start: [2026,7,29], end: [2026,8,6] },
+        { start: [2026,11,5], end: [2026,11,31] }
+      ];
+      const excludeExact = [
+        [2026,1,18],[2026,1,19],[2026,2,19],[2026,5,17],[2026,8,16]
+      ];
+      const malayDays = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+      const dates = [];
+      const d = new Date(2026, 0, 1);
+      const end = new Date(2026, 11, 31);
+      while (d <= end) {
+        const day = d.getDay();
+        if (day === 3 || day === 4) {
+          const y = d.getFullYear(), m = d.getMonth(), dd = d.getDate();
+          let skip = false;
+          for (const h of holidayRanges) {
+            const hs = new Date(h.start[0], h.start[1], h.start[2]);
+            const he = new Date(h.end[0], h.end[1], h.end[2]);
+            if (d >= hs && d <= he) { skip = true; break; }
+          }
+          if (!skip) {
+            for (const ex of excludeExact) {
+              if (y === ex[0] && m === ex[1] && dd === ex[2]) { skip = true; break; }
+            }
+          }
+          if (!skip) {
+            const dayName = malayDays[day];
+            const dateStr = String(dd).padStart(2,'0') + '/' + String(m+1).padStart(2,'0') + '/' + y;
+            dates.push({
+              label: dayName + ' - ' + dateStr,
+              value: y + '-' + String(m+1).padStart(2,'0') + '-' + String(dd).padStart(2,'0')
+            });
+          }
+        }
+        d.setDate(d.getDate() + 1);
+      }
+      return dates;
+    },
+    loadAttendance() {
+      if (!this.selectedClub || !this.selectedDate) { this.attendanceTable = []; return; }
+      const key = this.selectedClub + '|' + this.selectedDate;
+      if (this.savedAttendance[key]) {
+        this.attendanceTable = JSON.parse(JSON.stringify(this.savedAttendance[key]));
+        this.lastSavedMsg = 'Rekod tersimpan telah dimuatkan';
+      } else {
+        const students = this.clubStudents[this.selectedClub] || [];
+        this.attendanceTable = students.map(n => ({ name: n, hadir: true }));
+        this.lastSavedMsg = '';
+      }
+    },
+    setHadir(index, value) {
+      if (this.attendanceTable[index]) this.attendanceTable[index].hadir = value;
+    },
+    saveAttendance() {
+      if (!this.selectedClub || !this.selectedDate || !this.attendanceTable.length) return;
+      const key = this.selectedClub + '|' + this.selectedDate;
+      this.savedAttendance[key] = JSON.parse(JSON.stringify(this.attendanceTable));
+      try { localStorage.setItem('pm_attendance_2026', JSON.stringify(this.savedAttendance)); } catch (e) {}
+      this.lastSavedMsg = 'Disimpan pada ' + new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+    },
+    deleteSavedRecord(key) {
+      delete this.savedAttendance[key];
+      try { localStorage.setItem('pm_attendance_2026', JSON.stringify(this.savedAttendance)); } catch (e) {}
+      if (this.selectedClub + '|' + this.selectedDate === key) {
+        this.selectedDate = '';
+        this.attendanceTable = [];
+        this.lastSavedMsg = '';
+      }
+    },
+    rateClass(key) {
+      const arr = this.savedAttendance[key] || [];
+      if (!arr.length) return 'text-gray-400';
+      const pct = arr.filter(s => s.hadir).length / arr.length;
+      if (pct >= 0.8) return 'text-green-600';
+      if (pct >= 0.5) return 'text-yellow-600';
+      return 'text-red-600';
+    },
+    rateText(key) {
+      const arr = this.savedAttendance[key] || [];
+      if (!arr.length) return '0 hadir';
+      return arr.filter(s => s.hadir).length + '/' + arr.length + ' hadir';
     },
     generateActivity() {
       const f = this.activityForm;
@@ -656,7 +804,7 @@ function app() {
     downloadOPR() {
       const el = document.getElementById('opr-preview');
       if (!el) return;
-      const content = `<html><head><title>OPR Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>${el.innerHTML}</body></html>`;
+      const content = '<html><head><title>OPR Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>' + el.innerHTML + '</body></html>';
       const blob = new Blob([content], { type: 'text/html' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -666,7 +814,7 @@ function app() {
     downloadOPC() {
       const el = document.getElementById('opc-preview');
       if (!el) return;
-      const content = `<html><head><title>OPC Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>${el.innerHTML}</body></html>`;
+      const content = '<html><head><title>OPC Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>' + el.innerHTML + '</body></html>';
       const blob = new Blob([content], { type: 'text/html' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
