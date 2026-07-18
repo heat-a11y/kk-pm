@@ -63,6 +63,14 @@
       .sidebar-link svg { @apply w-5 h-5; }
       .main-content { @apply pb-20; }
     }
+    @media print {
+      body * { visibility: hidden; }
+      #opr-preview, #opr-preview * { visibility: visible; }
+      #opr-preview { position: absolute; left: 0; top: 0; width: 100%; padding: 0.5in; background: white; }
+      #opr-preview .no-print { display: none !important; }
+      #opr-preview .print-only { display: block !important; }
+    }
+    .print-only { display: none; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
@@ -386,76 +394,104 @@
     <div id="tab-opr" class="tab-content" :class="{ 'active': currentTab === 'opr' }">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 class="section-title">Laporan Satu Muka Surat (OPR)</h3>
-          <form @submit.prevent="generateOPR" class="space-y-4">
+          <h3 class="section-title">Penjana Laporan Satu Muka Surat (OPR)</h3>
+          <p class="text-xs text-gray-400 mb-4">Isi maklumat dan pilih aktiviti untuk dijana dalam laporan.</p>
+          <div class="space-y-4">
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Club Name</label>
-              <select class="form-input" x-model="oprForm.club">
-                <option value="">-- Select Club --</option>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Nama Kelab / Persatuan</label>
+              <select class="form-input" x-model="oprForm.club" @change="loadOPRActivities">
+                <option value="">-- Pilih Kelab --</option>
                 <template x-for="club in attendanceClubs" :key="club">
                   <option :value="club" x-text="club"></option>
                 </template>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Month</label>
-              <select class="form-input" x-model="oprForm.month">
-                <option value="">-- Select Month --</option>
-                <template x-for="m in months" :key="m">
-                  <option x-text="m" :value="m"></option>
-                </template>
-              </select>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Guru Penasihat</label>
+              <input type="text" class="form-input" placeholder="e.g. En. Ahmad bin Ismail" x-model="oprForm.teacher">
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Total Sessions Held</label>
-              <input type="number" class="form-input" min="0" x-model="oprForm.sessions">
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Jumlah Perjumpaan Direkodkan</label>
+              <input type="number" class="form-input" min="0" placeholder="e.g. 21" x-model="oprForm.meetings">
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Average Attendance (%)</label>
-              <input type="number" class="form-input" min="0" max="100" x-model="oprForm.attendance">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1.5">Key Achievement / Notes</label>
-              <textarea class="form-input" rows="3" placeholder="e.g. Students completed robotics module" x-model="oprForm.notes"></textarea>
-            </div>
-            <div class="flex gap-3 pt-1">
-              <button type="submit" class="btn-primary">Generate Report</button>
-              <button type="button" class="btn-secondary" @click="printOPR" x-show="generatedOPR">Print</button>
-            </div>
-          </form>
+            <template x-if="oprForm.club">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-2">Pilih Aktiviti untuk Laporan</label>
+                <div class="max-h-56 overflow-y-auto space-y-1.5 border border-gray-100 rounded-lg p-2">
+                  <template x-for="(a, i) in oprActivities" :key="i">
+                    <label class="flex items-start gap-2.5 py-1.5 px-2 rounded hover:bg-gray-50 cursor-pointer">
+                      <input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-primary-600 accent-primary-600 cursor-pointer shrink-0" x-model="a.checked">
+                      <div class="text-xs">
+                        <span class="font-medium text-gray-700" x-text="'M' + a.week + ' — ' + a.title"></span>
+                        <p class="text-gray-400 truncate" x-text="a.objectives"></p>
+                      </div>
+                    </label>
+                  </template>
+                </div>
+                <p class="text-xs text-gray-400 mt-1.5" x-text="oprActivities.filter(a => a.checked).length + ' / ' + oprActivities.length + ' aktiviti dipilih'"></p>
+              </div>
+            </template>
+            <template x-if="!oprForm.club">
+              <div class="text-center py-6 text-gray-400 text-xs border border-dashed border-gray-200 rounded-lg">
+                Sila pilih kelab untuk melihat senarai aktiviti
+              </div>
+            </template>
+          </div>
         </div>
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 class="section-title">Report Preview</h3>
-          <template x-if="generatedOPR">
-            <div id="opr-preview" class="space-y-3 text-xs leading-relaxed">
-              <div class="border-2 border-navy-800 p-5 rounded-lg">
-                <div class="text-center border-b-2 border-navy-800 pb-3 mb-3">
-                  <h4 class="text-sm font-bold text-navy-900">LAPORAN SATU MUKA SURAT</h4>
-                  <p class="text-[10px] text-gray-500">SJKC Pin Min · Tahun 2026</p>
+        <div class="flex flex-col gap-4">
+          <div id="opr-preview" class="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div class="p-6 sm:p-8 md:p-10">
+              <template x-if="oprForm.club && oprForm.teacher && oprForm.meetings">
+                <div class="text-xs leading-relaxed">
+                  <div class="text-center border-b-2 border-navy-800 pb-4 mb-5">
+                    <h4 class="text-sm sm:text-base font-bold text-navy-900 tracking-tight">LAPORAN SATU MUKA SURAT (OPR)</h4>
+                    <p class="text-[11px] font-semibold text-navy-700 mt-0.5">UNIT KOKURIKULUM TAHUN 2026</p>
+                    <p class="text-[10px] text-gray-500 mt-0.5">SJKC Pin Min</p>
+                  </div>
+                  <div class="mb-5">
+                    <h5 class="font-bold text-navy-800 text-[11px] mb-2 bg-gray-50 -mx-2 px-2 py-1.5 rounded">1.0 MAKLUMAT KELAB</h5>
+                    <table class="w-full text-[11px]">
+                      <tr><td class="py-1 w-[35%] text-gray-500">Nama Kelab/Persatuan</td><td class="py-1 font-medium text-gray-800" x-text="': ' + oprForm.club"></td></tr>
+                      <tr><td class="py-1 text-gray-500">Guru Penasihat</td><td class="py-1 font-medium text-gray-800" x-text="': ' + oprForm.teacher"></td></tr>
+                      <tr><td class="py-1 text-gray-500">Jumlah Perjumpaan Direkodkan</td><td class="py-1 font-medium text-gray-800" x-text="': ' + oprForm.meetings"></td></tr>
+                    </table>
+                  </div>
+                  <div class="mb-5">
+                    <h5 class="font-bold text-navy-800 text-[11px] mb-2 bg-gray-50 -mx-2 px-2 py-1.5 rounded">2.0 SOROTAN AKTIVITI TAHUNAN</h5>
+                    <template x-if="oprActivities.filter(a => a.checked).length">
+                      <div class="space-y-1.5 pl-0">
+                        <template x-for="a in oprActivities.filter(x => x.checked)" :key="a.week">
+                          <div class="flex gap-2">
+                            <span class="text-navy-600 font-bold shrink-0">•</span>
+                            <div>
+                              <span class="font-semibold text-gray-800" x-text="'Minggu ' + a.week + ': ' + a.title"></span>
+                              <span class="text-gray-500" x-text="' — ' + a.objectives"></span>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                    <template x-if="!oprActivities.filter(a => a.checked).length">
+                      <p class="text-gray-400 italic">Tiada aktiviti dipilih untuk dilaporkan.</p>
+                    </template>
+                  </div>
+                  <div class="mt-6 pt-3 border-t border-gray-200 text-[10px] text-gray-400 text-center">
+                    <p class="italic">Laporan dijana secara rasmi oleh Sistem Pengurusan Kokurikulum (GKKK).</p>
+                  </div>
                 </div>
-                <table class="w-full text-xs">
-                  <tr><td class="font-semibold py-1 w-1/3">Kelab</td><td x-text="generatedOPR.club" class="py-1"></td></tr>
-                  <tr><td class="font-semibold py-1">Bulan</td><td x-text="generatedOPR.month" class="py-1"></td></tr>
-                  <tr><td class="font-semibold py-1">Jumlah Sesi</td><td x-text="generatedOPR.sessions" class="py-1"></td></tr>
-                  <tr><td class="font-semibold py-1">Kehadiran Purata</td><td x-text="generatedOPR.attendance + '%'" class="py-1"></td></tr>
-                  <tr><td class="font-semibold py-1 align-top">Catatan</td><td x-text="generatedOPR.notes" class="py-1"></td></tr>
-                </table>
-                <div class="mt-4 pt-3 border-t border-gray-200 text-[10px] text-gray-400">
-                  <p class="text-center">Disediakan oleh: ___________________________ &nbsp;&nbsp; Disemak oleh: ___________________________</p>
+              </template>
+              <template x-if="!oprForm.club || !oprForm.teacher || !oprForm.meetings">
+                <div class="text-center py-14 text-gray-400">
+                  <svg class="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <p class="text-sm">Lengkapkan borang di sebelah kiri<br>untuk pratonton laporan OPR</p>
                 </div>
-              </div>
-              <div class="flex gap-2 pt-1">
-                <button class="btn-primary text-xs" @click="downloadOPR">Download PDF</button>
-                <button class="btn-secondary text-xs" @click="printOPR">Print</button>
-              </div>
+              </template>
             </div>
-          </template>
-          <template x-if="!generatedOPR">
-            <div class="text-center py-12 text-gray-400">
-              <svg class="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              <p class="text-sm">Complete the form to preview the OPR report</p>
-            </div>
-          </template>
+          </div>
+          <button @click="printOPRDoc" class="btn-primary w-full flex items-center justify-center gap-2" x-show="oprForm.club && oprForm.teacher && oprForm.meetings">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Cetak Laporan / Simpan PDF
+          </button>
         </div>
       </div>
     </div>
@@ -674,8 +710,8 @@ function app() {
     hubActivities: [],
     customForm: { club: '', week: '', title: '', objectives: '' },
     customActivities: [],
-    oprForm: { club: '', month: '', sessions: 0, attendance: 0, notes: '' },
-    generatedOPR: null,
+    oprForm: { club: '', teacher: '', meetings: '' },
+    oprActivities: [],
     opcForm: { teacher: '', club: '', date: '', focus: '', notes: '', followup: '' },
     generatedOPC: null,
     coachingHistory: [],
@@ -866,10 +902,11 @@ function app() {
     resetCustomForm() {
       this.customForm = { club: '', week: '', title: '', objectives: '' };
     },
-    generateOPR() {
-      const f = this.oprForm;
-      if (!f.club || !f.month || !f.sessions || !f.attendance) { alert('Please fill in all required fields.'); return; }
-      this.generatedOPR = { ...f };
+    loadOPRActivities() {
+      if (!this.oprForm.club) { this.oprActivities = []; return; }
+      const db = this.activityDB[this.oprForm.club];
+      if (!db) { this.oprActivities = []; return; }
+      this.oprActivities = db.map(a => ({ ...a, checked: true }));
     },
     generateOPC() {
       const f = this.opcForm;
@@ -881,15 +918,8 @@ function app() {
       this.opcForm = { teacher: '', club: '', date: '', focus: '', notes: '', followup: '' };
       this.generatedOPC = null;
     },
-    printOPR() {
-      const el = document.getElementById('opr-preview');
-      if (!el) return;
-      const win = window.open('', '_blank');
-      win.document.write('<html><head><title>OPR Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>');
-      win.document.write(el.innerHTML);
-      win.document.write('</body></html>');
-      win.document.close();
-      win.print();
+    printOPRDoc() {
+      window.print();
     },
     printOPC() {
       const el = document.getElementById('opc-preview');
@@ -900,16 +930,6 @@ function app() {
       win.document.write('</body></html>');
       win.document.close();
       win.print();
-    },
-    downloadOPR() {
-      const el = document.getElementById('opr-preview');
-      if (!el) return;
-      const content = '<html><head><title>OPR Report</title><style>body{font-family:Inter,sans-serif;padding:40px;font-size:12px;}table{width:100%}td{padding:4px 0}</style></head><body>' + el.innerHTML + '</body></html>';
-      const blob = new Blob([content], { type: 'text/html' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'OPR_Report_' + (this.generatedOPR?.club || '') + '.html';
-      a.click();
     },
     downloadOPC() {
       const el = document.getElementById('opc-preview');
