@@ -80,8 +80,9 @@
     .btn-padam { @apply btn-action border border-red-300 text-red-600 hover:bg-red-50; }
     .btn-jana { @apply btn-action bg-blue-600 text-white hover:bg-blue-700; }
     .btn-simpan { @apply btn-action bg-green-600 text-white hover:bg-green-700; }
-    .modal-overlay { @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4; }
-    .modal-content { @apply bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 shadow-2xl; }
+    .modal-overlay { @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4; overflow-y: auto; }
+    .modal-content { @apply bg-white rounded-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 shadow-2xl; }
+    body.modal-open { overflow: hidden; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
@@ -268,6 +269,7 @@
                   <p class="text-xs text-gray-400" x-text="r.date"></p>
                 </div>
                 <button @click="viewReport(i, 'dashboard')" class="text-xs font-medium text-blue-600 hover:text-blue-800">Lihat</button>
+                <button @click="deleteSavedReport(i, 'dashboard')" class="text-xs font-medium text-red-500 hover:text-red-700 ml-2">Padam</button>
               </div>
             </template>
           </div>
@@ -349,6 +351,48 @@
         </div>
       </div>
 
+      <!-- Urus Pelajar -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mt-4 fade-in">
+        <h3 class="section-title">Urus Pelajar</h3>
+        <p class="text-xs text-gray-400 mb-4">Tambah atau padam pelajar untuk setiap kelab.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Pilih Kelab</label>
+            <select class="form-input" x-model="studentManager.club">
+              <option value="">-- Pilih Kelab --</option>
+              <template x-for="club in attendanceClubs" :key="club">
+                <option :value="club" x-text="club"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Nama Pelajar</label>
+            <div class="flex gap-2">
+              <input type="text" class="form-input flex-1" placeholder="e.g. AHMAD BIN ABU" x-model="studentManager.name" @keyup.enter="addStudent">
+              <button @click="addStudent" class="btn-primary shrink-0" :disabled="!studentManager.club || !studentManager.name.trim()">Tambah</button>
+            </div>
+          </div>
+        </div>
+        <template x-if="studentManager.club && clubStudents[studentManager.club] && clubStudents[studentManager.club].length">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-gray-500" x-text="clubStudents[studentManager.club].length + ' pelajar'"></span>
+            </div>
+            <div class="max-h-48 overflow-y-auto border border-gray-100 rounded-lg divide-y divide-gray-50">
+              <template x-for="(s, i) in clubStudents[studentManager.club]" :key="i">
+                <div class="flex items-center justify-between px-3 py-2 hover:bg-gray-50/50">
+                  <span class="text-sm text-gray-800" x-text="s"></span>
+                  <button @click="deleteStudent(studentManager.club, i)" class="text-xs font-medium text-red-500 hover:text-red-700">Padam</button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+        <template x-if="studentManager.club && (!clubStudents[studentManager.club] || !clubStudents[studentManager.club].length)">
+          <p class="text-xs text-gray-400 text-center py-4">Tiada pelajar untuk kelab ini.</p>
+        </template>
+      </div>
+
       <!-- Button Bar -->
       <div class="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-gray-200">
         <button @click="padam('attendance')" class="btn-padam">
@@ -377,6 +421,7 @@
                   <p class="text-xs text-gray-400" x-text="r.date"></p>
                 </div>
                 <button @click="viewReport(i, 'attendance')" class="text-xs font-medium text-blue-600 hover:text-blue-800">Lihat</button>
+                <button @click="deleteSavedReport(i, 'attendance')" class="text-xs font-medium text-red-500 hover:text-red-700 ml-2">Padam</button>
               </div>
             </template>
           </div>
@@ -512,6 +557,7 @@
                   <p class="text-xs text-gray-400" x-text="r.date"></p>
                 </div>
                 <button @click="viewReport(i, 'activity')" class="text-xs font-medium text-blue-600 hover:text-blue-800">Lihat</button>
+                <button @click="deleteSavedReport(i, 'activity')" class="text-xs font-medium text-red-500 hover:text-red-700 ml-2">Padam</button>
               </div>
             </template>
           </div>
@@ -652,6 +698,7 @@
                   <p class="text-xs text-gray-400" x-text="r.date"></p>
                 </div>
                 <button @click="viewReport(i, 'opr')" class="text-xs font-medium text-blue-600 hover:text-blue-800">Lihat</button>
+                <button @click="deleteSavedReport(i, 'opr')" class="text-xs font-medium text-red-500 hover:text-red-700 ml-2">Padam</button>
               </div>
             </template>
           </div>
@@ -802,6 +849,7 @@
                   <p class="text-xs text-gray-400" x-text="r.date"></p>
                 </div>
                 <button @click="viewReport(i, 'opc')" class="text-xs font-medium text-blue-600 hover:text-blue-800">Lihat</button>
+                <button @click="deleteSavedReport(i, 'opc')" class="text-xs font-medium text-red-500 hover:text-red-700 ml-2">Padam</button>
               </div>
             </template>
           </div>
@@ -1023,6 +1071,8 @@ function app() {
       { club: 'Kelab Tarian', week: 6, title: 'Tarian Moden Kontemporari', objectives: 'Gabungan pergerakan bebas dan ekspresi dalam tarian kontemporari. Ahli akan mempelajari koreografi moden dan teknik improvisasi.' },
       { club: 'Persatuan Bahasa', week: 4, title: 'Debat Bahasa Melayu', objectives: 'Perdebatan format parlimen dalam Bahasa Melayu. Topik merangkumi isu-isu semasa dan cabaran dunia pendidikan.' }
     ],
+    autoJanaDone: { dashboard: false, attendance: false, activity: false, opr: false, opc: false },
+    studentManager: { club: '', name: '' },
 
     get pageTitle() {
       const t = this.tabs.find(t => t.id === this.currentTab);
@@ -1059,6 +1109,10 @@ function app() {
     },
     switchTab(id) {
       this.currentTab = id;
+      if (!this.autoJanaDone[id]) {
+        this.jana(id);
+        this.autoJanaDone[id] = true;
+      }
     },
     init() {
       try {
@@ -1068,6 +1122,10 @@ function app() {
       try {
         const stored = localStorage.getItem('pm_custom_activities');
         if (stored) this.customActivities = JSON.parse(stored);
+      } catch (e) {}
+      try {
+        const stored = localStorage.getItem('pm_club_students');
+        if (stored) this.clubStudents = JSON.parse(stored);
       } catch (e) {}
       try {
         const stored = localStorage.getItem('pm_saved_reports');
@@ -1384,11 +1442,35 @@ function app() {
       }
       this.viewerContent = html;
       this.showViewer = true;
+      document.body.classList.add('modal-open');
     },
     closeViewer() {
       this.showViewer = false;
       this.viewerContent = '';
       this.viewerTitle = '';
+      document.body.classList.remove('modal-open');
+    },
+    deleteSavedReport(idx, tab) {
+      if (!this.savedReports[tab]) return;
+      this.savedReports[tab].splice(idx, 1);
+      try { localStorage.setItem('pm_saved_reports', JSON.stringify(this.savedReports)); } catch (e) {}
+    },
+    addStudent() {
+      const c = this.studentManager.club;
+      const n = this.studentManager.name.trim().toUpperCase();
+      if (!c || !n) return;
+      if (!this.clubStudents[c]) this.clubStudents[c] = [];
+      if (this.clubStudents[c].includes(n)) { alert('Nama sudah wujud!'); return; }
+      this.clubStudents[c].push(n);
+      try { localStorage.setItem('pm_club_students', JSON.stringify(this.clubStudents)); } catch (e) {}
+      this.studentManager.name = '';
+      if (this.selectedClub === c) this.loadAttendance();
+    },
+    deleteStudent(club, idx) {
+      if (!this.clubStudents[club]) return;
+      this.clubStudents[club].splice(idx, 1);
+      try { localStorage.setItem('pm_club_students', JSON.stringify(this.clubStudents)); } catch (e) {}
+      if (this.selectedClub === club) this.loadAttendance();
     },
   };
 }
