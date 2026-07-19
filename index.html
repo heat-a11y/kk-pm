@@ -81,9 +81,8 @@
     .btn-jana { @apply btn-action bg-blue-600 text-white hover:bg-blue-700; }
     .btn-simpan { @apply btn-action bg-green-600 text-white hover:bg-green-700; }
     .btn-hapus { @apply btn-action bg-red-600 text-white hover:bg-red-700; }
-    .modal-overlay { @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4; overflow-y: auto; }
-    .modal-content { @apply bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl mx-2; }
-    body.modal-open { overflow: hidden; }
+    .modal-overlay { @apply fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6; background: rgba(1,0,102,0.55); }
+    .modal-content { @apply bg-white rounded-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6 shadow-2xl mx-auto; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
@@ -1498,13 +1497,11 @@ function app() {
       html += '</div>';
       this.viewerContent = html;
       this.showViewer = true;
-      document.body.classList.add('modal-open');
     },
     closeViewer() {
       this.showViewer = false;
       this.viewerContent = '';
       this.viewerTitle = '';
-      document.body.classList.remove('modal-open');
     },
     deleteSavedReport(idx, tab) {
       if (!this.savedReports[tab]) return;
@@ -1556,7 +1553,6 @@ function app() {
       html += '</tbody></table>';
       this.viewerContent = html;
       this.showViewer = true;
-      document.body.classList.add('modal-open');
     },
     hapusSemua() {
       if (!confirm('Padam SEMUA data? Tindakan ini tidak boleh dibatalkan.')) return;
