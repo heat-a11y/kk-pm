@@ -267,13 +267,13 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           Hapus Semua
         </button>
-        <button @click="jana('dashboard')" class="btn-jana">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-          Jana
+        <button @click="janaSemua()" class="btn-jana">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Jana Semua
         </button>
-        <button @click="simpan('dashboard')" class="btn-simpan">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-          Simpan
+        <button @click="exportAllPDF()" class="btn-simpan">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          Eksport PDF
         </button>
       </div>
 
@@ -1425,6 +1425,133 @@ function app() {
       // 4. Show feedback
       this.janaFeedback = 'Semua data telah dijana & disimpan!';
       setTimeout(() => { this.janaFeedback = ''; }, 3000);
+    },
+    janaSemua() {
+      const allTeachers = this.opcTeachers.filter(t => t !== 'SEMUA GURU');
+      const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      // For EACH club: generate attendance, OPR
+      this.attendanceClubs.forEach(club => {
+        // Attendance
+        this.selectedClub = club;
+        if (this.availableDates.length) {
+          this.selectedDate = this.availableDates[Math.floor(Math.random() * this.availableDates.length)].value;
+        }
+        this.loadAttendance();
+        if (this.attendanceTable.length) {
+          this.attendanceTable = this.attendanceTable.map(s => ({ ...s, hadir: Math.random() > 0.25 }));
+        }
+        this.simpan('attendance');
+        // OPR report for this club
+        this.oprForm = { club, teacher: rand(allTeachers), meetings: String(Math.floor(Math.random() * 10) + 12) };
+        this.loadOPRActivities();
+        if (this.oprActivities.length) {
+          this.oprActivities = this.oprActivities.map(a => ({ ...a, checked: Math.random() > 0.3 }));
+        }
+        this.simpan('opr');
+      });
+      // For EACH teacher: generate OPC
+      allTeachers.forEach(t => {
+        this.opcForm = {
+          kepada: t,
+          daripada: 'LIAN (Guru Kanan Kokurikulum - GKKK)',
+          tarikh: '2026-07-14',
+          perkara: 'Maklum Balas & Bimbingan Profesional Kokurikulum',
+          strength: 'Guru ' + t + ' menunjukkan komitmen tinggi dalam pengurusan kelab dan berjaya melaksanakan aktiviti mengikut perancangan tahunan.',
+          growth: 'Dokumentasi rekod kehadiran perlu dikemaskini dengan lebih teratur dan sistematik.',
+          actionPlan: '1. Menyediakan buku rekod khas.\n2. Menghadiri kursus pentadbiran.\n3. Perjumpaan susulan pada bulan hadapan.'
+        };
+        this.simpan('opc');
+      });
+      // Activity Hub - save a few sample activities
+      this.sampleActivities.forEach((sa, i) => {
+        if (i < 3) { // save first 3
+          this.customForm = { club: sa.club, week: sa.week.toString(), title: sa.title, objectives: sa.objectives };
+          this.hubClub = sa.club;
+          this.customActivities.push({ club: sa.club, week: sa.week, title: sa.title, objectives: sa.objectives });
+        }
+      });
+      if (this.customActivities.length) {
+        try { localStorage.setItem('pm_custom_activities', JSON.stringify(this.customActivities)); } catch (e) {}
+      }
+      // Dashboard snapshot
+      this.dashStats.activeClubs = this.attendanceClubs.length;
+      this.dashStats.teachers = allTeachers.length;
+      this.simpan('dashboard');
+      // Mark all autoJanaDone
+      this.autoJanaDone = { dashboard: true, attendance: true, activity: true, opr: true, opc: true };
+      this.janaFeedback = 'Semua data telah dijana & disimpan!';
+      setTimeout(() => { this.janaFeedback = ''; }, 4000);
+    },
+    exportAllPDF() {
+      let html = '<html><head><meta charset="UTF-8"><title>Laporan Kokurikulum SJKC Pin Min 2026</title><style>';
+      html += 'body{font-family:Inter,system-ui,sans-serif;padding:0.5in;font-size:11px;color:#1e293b;}';
+      html += 'h1{font-size:18px;text-align:center;border-bottom:2px solid #010066;padding-bottom:8px;margin-bottom:20px;}';
+      html += 'h2{font-size:14px;color:#010066;margin-top:20px;border-bottom:1px solid #cbd5e1;padding-bottom:4px;}';
+      html += 'h3{font-size:12px;color:#334155;margin-top:12px;}';
+      html += 'table{width:100%;border-collapse:collapse;margin:8px 0;}';
+      html += 'th,td{border:1px solid #e2e8f0;padding:4px 6px;text-align:left;font-size:10px;}';
+      html += 'th{background:#f1f5f9;font-weight:600;}';
+      html += '.section{margin-bottom:16px;page-break-inside:avoid;}';
+      html += '.footer{text-align:center;font-size:9px;color:#94a3b8;margin-top:30px;border-top:1px solid #e2e8f0;padding-top:8px;}';
+      html += 'hr{border:none;border-top:1px dashed #cbd5e1;margin:12px 0;}';
+      html += '@media print{body{padding:0.3in;}}';
+      html += '</style></head><body>';
+      html += '<h1>LAPORAN KOKURIKULUM SJKC PIN MIN<br><span style="font-size:12px;color:#64748b;">Tahun 2026 — Sistem Pengurusan Kokurikulum</span></h1>';
+
+      const tabs = ['dashboard', 'attendance', 'opr', 'opc'];
+      const tabLabels = { dashboard: 'Dashboard', attendance: 'Kehadiran', activity: 'Aktiviti', opr: 'OPR Report', opc: 'OPC Coaching' };
+
+      tabs.forEach(tab => {
+        const reports = this.savedReports[tab] || [];
+        if (!reports.length) return;
+        html += '<div class="section"><h2>' + tabLabels[tab] + '</h2>';
+        reports.forEach(r => {
+          html += '<div style="margin:6px 0;padding:6px;background:#f8fafc;border-radius:4px;">';
+          html += '<h3 style="margin:0;">' + (r.title || 'Laporan') + '</h3>';
+          html += '<p style="font-size:9px;color:#64748b;margin:2px 0 6px;">' + (r.date || '') + '</p>';
+          if (r.data) {
+            for (const [key, val] of Object.entries(r.data)) {
+              html += '<p style="margin:2px 0;"><strong>' + key + ':</strong> ';
+              if (typeof val === 'object' && val !== null) {
+                html += JSON.stringify(val).substring(0, 200);
+              } else {
+                html += String(val || '—');
+              }
+              html += '</p>';
+            }
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+
+      // Activity section
+      if (this.customActivities.length) {
+        html += '<div class="section"><h2>Aktiviti Ditambah</h2>';
+        this.customActivities.forEach(ca => {
+          html += '<div style="margin:4px 0;"><strong>' + ca.title + '</strong> — ' + ca.club + ' (M' + ca.week + ')</div>';
+        });
+        html += '</div>';
+      }
+
+      // Attendance records
+      if (this.savedKeys.length) {
+        html += '<div class="section"><h2>Rekod Kehadiran</h2><table><thead><tr><th>Kelab</th><th>Tarikh</th><th>Hadir</th><th>Jumlah</th></tr></thead><tbody>';
+        this.savedKeys.forEach(key => {
+          const parts = key.split('|');
+          const recs = this.savedAttendance[key] || [];
+          html += '<tr><td>' + parts[0] + '</td><td>' + parts[1] + '</td><td>' + recs.filter(s => s.hadir).length + '</td><td>' + recs.length + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      }
+
+      html += '<div class="footer">Laporan dijana secara rasmi oleh Sistem Pengurusan Kokurikulum (GKKK) — SJKC Pin Min ' + new Date().getFullYear() + '</div>';
+      html += '</body></html>';
+
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => { win.print(); }, 500);
     },
     simpan(tab) {
       let data = {};
