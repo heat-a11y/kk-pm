@@ -613,7 +613,12 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Guru Penasihat</label>
-              <input type="text" class="form-input" placeholder="e.g. En. Ahmad bin Ismail" x-model="oprForm.teacher">
+              <select class="form-input" x-model="oprForm.teacher">
+                <option value="">-- Pilih Guru --</option>
+                <template x-for="t in opcTeachers.filter(t => t !== 'SEMUA GURU')" :key="t">
+                  <option :value="t" x-text="t"></option>
+                </template>
+              </select>
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Jumlah Perjumpaan Direkodkan</label>
@@ -1645,15 +1650,33 @@ function app() {
           html += '<div style="margin:6px 0;padding:6px;background:#f8fafc;border-radius:4px;">';
           html += '<h3 style="margin:0;">' + (r.title || 'Laporan') + '</h3>';
           html += '<p style="font-size:9px;color:#64748b;margin:2px 0 6px;">' + (r.date || '') + '</p>';
-          if (r.data) {
+           if (r.data) {
             for (const [key, val] of Object.entries(r.data)) {
-              html += '<p style="margin:2px 0;"><strong>' + key + ':</strong> ';
-              if (typeof val === 'object' && val !== null) {
-                html += JSON.stringify(val).substring(0, 200);
+              const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+              html += '<p style="margin:3px 0;"><strong style="color:#334155;">' + label + ':</strong> ';
+              if (Array.isArray(val)) {
+                html += '</p><table style="width:100%;border-collapse:collapse;margin:4px 0;"><thead><tr><th style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;background:#f1f5f9;text-align:left;">#</th><th style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;background:#f1f5f9;text-align:left;">Nama</th><th style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;background:#f1f5f9;text-align:left;">Status</th></tr></thead><tbody>';
+                val.forEach((item, i) => {
+                  if (typeof item === 'object' && item !== null) {
+                    const name = item.name || item.title || '-';
+                    const status = item.hadir !== undefined ? (item.hadir ? 'Hadir' : 'Tidak Hadir') : '-';
+                    html += '<tr><td style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;">' + (i+1) + '</td><td style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;">' + name + '</td><td style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;">' + status + '</td></tr>';
+                  } else {
+                    html += '<tr><td style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;">' + (i+1) + '</td><td colspan="2" style="border:1px solid #e2e8f0;padding:3px 5px;font-size:10px;">' + item + '</td></tr>';
+                  }
+                });
+                html += '</tbody></table>';
+              } else if (typeof val === 'object' && val !== null) {
+                html += '</p><div style="margin:4px 0;padding:6px;background:#f8fafc;border-radius:4px;font-size:10px;">';
+                for (const [k2, v2] of Object.entries(val)) {
+                  const v2str = (typeof v2 === 'object' && v2 !== null) ? JSON.stringify(v2) : String(v2 || '—');
+                  const k2label = k2.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+                  html += '<p style="margin:1px 0;"><span style="color:#64748b;">' + k2label + ':</span> <span>' + v2str + '</span></p>';
+                }
+                html += '</div>';
               } else {
-                html += String(val || '—');
+                html += '<span>' + String(val || '—') + '</span></p>';
               }
-              html += '</p>';
             }
           }
           html += '</div>';
