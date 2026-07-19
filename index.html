@@ -898,11 +898,11 @@
   <div class="modal-content">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-lg font-bold text-gray-800" x-text="viewerTitle"></h3>
-      <button @click="closeViewer" class="text-gray-400 hover:text-gray-600 transition">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button @click="closeViewer" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="text-sm text-gray-700 leading-relaxed overflow-y-auto max-h-[65vh]" x-html="viewerContent"></div>
+    <div class="text-sm text-gray-700 leading-relaxed overflow-y-auto max-h-[65vh] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300" x-html="viewerContent"></div>
   </div>
 </div>
 </div>
@@ -1453,25 +1453,49 @@ function app() {
       this.savedReports[tab].push(report);
       try { localStorage.setItem('pm_saved_reports', JSON.stringify(this.savedReports)); } catch (e) {}
     },
-    viewReport(idx, tab) {
+     viewReport(idx, tab) {
       const report = this.savedReports[tab] && this.savedReports[tab][idx];
       if (!report) return;
       this.viewerTitle = report.title + ' — ' + report.date;
-      let html = '';
+      let html = '<div class="space-y-3">';
       const d = report.data;
       for (const [key, val] of Object.entries(d)) {
-        html += '<div class="mb-3"><span class="font-bold text-navy-800 text-xs uppercase tracking-wider block mb-1">' + key + '</span>';
+        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+        html += '<div class="border border-gray-200 rounded-lg p-3 bg-gray-50/50">';
+        html += '<p class="text-[10px] font-bold text-navy-700 uppercase tracking-wider mb-1.5">' + label + '</p>';
         if (typeof val === 'object' && val !== null) {
-          html += '<div class="bg-gray-50 rounded p-2 text-xs text-gray-700 space-y-1">';
-          for (const [k2, v2] of Object.entries(val)) {
-            html += '<div><span class="font-medium text-gray-600">' + k2 + ':</span> <span>' + (typeof v2 === 'object' ? JSON.stringify(v2) : v2) + '</span></div>';
+          if (Array.isArray(val)) {
+            if (val.length) {
+              html += '<div class="space-y-1">';
+              val.forEach((item, i) => {
+                if (typeof item === 'object') {
+                  html += '<div class="bg-white rounded px-2 py-1.5 border border-gray-100 text-xs">';
+                  for (const [k, v] of Object.entries(item)) {
+                    html += '<div><span class="font-medium text-gray-500">' + k + ':</span> <span class="text-gray-700">' + (v || '—') + '</span></div>';
+                  }
+                  html += '</div>';
+                } else {
+                  html += '<div class="flex items-center gap-2 text-sm"><span class="w-5 h-5 rounded-full bg-navy-100 text-navy-700 flex items-center justify-center text-[10px] font-bold shrink-0">' + (i+1) + '</span><span class="text-gray-700">' + item + '</span></div>';
+                }
+              });
+              html += '</div>';
+            } else {
+              html += '<p class="text-xs text-gray-400 italic">Tiada data</p>';
+            }
+          } else {
+            html += '<div class="bg-white rounded border border-gray-100 divide-y divide-gray-50 text-xs">';
+            for (const [k2, v2] of Object.entries(val)) {
+              const v2str = (typeof v2 === 'object' && v2 !== null) ? JSON.stringify(v2) : String(v2 || '—');
+              html += '<div class="flex px-2 py-1.5"><span class="text-gray-500 w-1/3 shrink-0">' + k2 + '</span><span class="text-gray-700">' + v2str + '</span></div>';
+            }
+            html += '</div>';
           }
-          html += '</div>';
         } else {
-          html += '<div class="text-sm text-gray-700">' + (val || '<span class="text-gray-400 italic">kosong</span>') + '</div>';
+          html += '<p class="text-sm text-gray-700">' + (val || '<span class="text-gray-400 italic">kosong</span>') + '</p>';
         }
         html += '</div>';
       }
+      html += '</div>';
       this.viewerContent = html;
       this.showViewer = true;
       document.body.classList.add('modal-open');
