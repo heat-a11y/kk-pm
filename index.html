@@ -1542,6 +1542,7 @@ function app() {
       // 2. Save ALL tabs
       this.simpan('dashboard');
       this.simpan('attendance');
+      this.saveAttendance(); // also save to savedAttendance for dashboard counting
       this.simpan('activity');
       this.simpan('opr');
       this.simpan('opc');
@@ -1566,7 +1567,9 @@ function app() {
         if (this.attendanceTable.length) {
           this.attendanceTable = this.attendanceTable.map(s => ({ ...s, hadir: Math.random() > 0.25 }));
         }
+        // Save to BOTH savedReports AND savedAttendance for dashboard counting
         this.simpan('attendance');
+        this.saveAttendance();
 
         // 10 OPR reports per club with different report types
         const shuffledReports = [...db.oprReports].sort(() => Math.random() - 0.5);
