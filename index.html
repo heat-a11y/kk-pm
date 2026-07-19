@@ -1035,7 +1035,7 @@ function app() {
       return new Date().toLocaleDateString('en-MY', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     },
     get savedKeys() {
-      return Object.keys(this.savedAttendance).sort().reverse();
+      return this.savedAttendance ? Object.keys(this.savedAttendance).sort().reverse() : [];
     },
     get totalActivities() {
       let n = 0;
@@ -1074,7 +1074,16 @@ function app() {
       } catch (e) {}
       try {
         const stored = localStorage.getItem('pm_saved_reports');
-        if (stored) this.savedReports = JSON.parse(stored);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          this.savedReports = {
+            dashboard: parsed.dashboard || [],
+            attendance: parsed.attendance || [],
+            activity: parsed.activity || [],
+            opr: parsed.opr || [],
+            opc: parsed.opc || [],
+          };
+        }
       } catch (e) {}
       this.availableDates = this.buildDateList();
     },
